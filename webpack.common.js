@@ -8,7 +8,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
     library: 'ReactSimpleTreeMenu',
-    libraryTarget: 'umd',
+    libraryTarget: 'umd2',
     publicPath: '/dist/',
     umdNamedDefine: true,
     globalObject: `typeof self !== 'undefined' ? self : this`,

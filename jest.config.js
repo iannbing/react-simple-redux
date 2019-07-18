@@ -1,4 +1,11 @@
+const React = require('react');
+
 module.exports = {
+  verbose: true,
+  transform: { '^.+\\.[t|j]sx?$': 'babel-jest' },
+  globals: {
+    react: React,
+  },
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   collectCoverage: true,
@@ -18,7 +25,6 @@ module.exports = {
       },
     ],
   ],
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   setupFilesAfterEnv: ['./jest.setup.js'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx,js,jsx}',
