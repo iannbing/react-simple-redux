@@ -1,5 +1,3 @@
-# [NOTE]: This is a personal experimental project, which is under heavy development. DO NOT use this in your production code.
-
 # React Simple Redux
 
 A minimal implementation of `react-redux` using React Context API. The API completely follows how `react-redux` works.
@@ -21,20 +19,30 @@ npm i react-simple-redux
 yarn add react-simple-redux
 ```
 
+First, create a separate file `store.js` to instantiate the components. And then plug these components into your app.
+
+```js
+import createStore from "react-simple-redux";
+import reducer from "./path/to/reducer";
+
+const { Provider, Consumer, connect } = createStore(reducer);
+
+export { Provider, Consumer, connect };
+```
+
 Wrap your component with `Provider`. It doesn't have to be the direct parent, nor at the top level of your app.
 
 Let's say you want to connect `UserProfile` to `store`, insert `Provider` like this.
 
 ```jsx
-import { Provider } from 'react-simple-redux';
-import reducer from './path/to/your/reducer';
+import { Provider } from './store';
 
 const initialState = { firstName: 'Jon', lastName: 'Snow', email: 'jon.snow@email.com' }
 
 <Dashboard>
-    <Provider reducer={reducer} initialState={initialState} >   // feeding data
+    <Provider initialState={initialState} >
         <Header>
-            <UserProfile />  // consuming data
+            <UserProfile />
         </Header>
     </Provider>
 </Dashboard>
@@ -49,7 +57,7 @@ export default function reducer(state, action){
     const { type, payload } = action;
 
     switch(type){
-        case: SET_USERNAME: {
+        case SET_USERNAME: {
             const { firstName, lastName } = payload;
             return {...state, firstName, lastName};
         }
@@ -67,7 +75,7 @@ export const setUsernameAction = ({ firstName, lastName }) => ({ type: SET_USERN
 UserProfile.jsx
 
 ```jsx
-
+import { connect } from './path/to/store';
 import { setUsernameAction } from './path/to/your/reducer';
 
 const UserProfile = ({ username, email, setUsername }) => {
