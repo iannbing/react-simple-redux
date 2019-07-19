@@ -1,3 +1,5 @@
+# [NOTE]: This is a personal experimental project, which is under heavy development. DO NOT use this in your production code.
+
 # React Simple Redux
 
 A minimal implementation of `react-redux` using React Context API. The API completely follows how `react-redux` works.

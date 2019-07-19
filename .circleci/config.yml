@@ -78,11 +78,11 @@ jobs:
   build:
     docker:
       - image: circleci/node:10.15
-    working_directory: ~/react-simple-tree-menu
+    working_directory: ~/react-simple-redux
     steps:
       - install
       - run_tests
-      - build_story
+      # - build_story
       - build:
           environment: 'dev'
       - build:
@@ -90,11 +90,11 @@ jobs:
   release_rc:
     docker:
       - image: circleci/node:10.15
-    working_directory: ~/react-simple-tree-menu
+    working_directory: ~/react-simple-redux
     steps:
       - install
       - run_tests
-      - build_story
+      # - build_story
       - bump_beta_version
       - build:
           environment: 'dev'
@@ -104,7 +104,7 @@ jobs:
   release:
     docker:
       - image: circleci/node:10.15
-    working_directory: ~/react-simple-tree-menu
+    working_directory: ~/react-simple-redux
     steps:
       - install
       - run_tests
@@ -115,7 +115,7 @@ jobs:
           environment: 'prod'
 
 workflows:
-  version: 2.1
+  version: 2
   build:
     jobs:
       - build:

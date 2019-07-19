@@ -1,5 +1,5 @@
 const path = require('path');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
   mode: 'none',
@@ -38,6 +38,6 @@ module.exports = {
       assets: path.resolve(__dirname, 'assets'),
     },
   },
-  plugins: [new CleanWebpackPlugin(['dist'])],
+  plugins: [new CleanWebpackPlugin()],
   externals: ['react', 'react-dom'],
 };
