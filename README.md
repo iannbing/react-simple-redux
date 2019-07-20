@@ -51,8 +51,14 @@ const initialState = { firstName: 'Jon', lastName: 'Snow', email: 'jon.snow@emai
 
 ```jsx
 // reducer.js
+
+const SET_USERNAME = 'action/set_username';
+
 export default function reducer(state, action){
     const { type, payload } = action;
+
+    // To log all the actions
+    // console.log(type, payload);
 
     switch(type){
         case SET_USERNAME: {
@@ -66,15 +72,20 @@ export default function reducer(state, action){
 }
 
 // Action creator
-export const setUsernameAction = ({ firstName, lastName }) => ({ type: SET_USERNAME, payload: { firstName, lastName } });
+export const setUsernameAction = ({ firstName, lastName }) => ({
+    type: SET_USERNAME,
+    payload: { firstName, lastName }
+});
 
 ```
 
-**Note: you need to wrap your component with `React.memo`**. 
-This is necessary to prevent unnecessary re-render caused by state updates.
+Finally, define how data and dispatchers should work in your child component.
+**Note: you need to wrap your component with `React.memo`**.
+It is necessary to prevent unnecessary re-render caused by state updates.
 
 ```jsx
 // UserProfile.jsx
+
 import { connect } from './path/to/store';
 import { setUsernameAction } from './path/to/your/reducer';
 
