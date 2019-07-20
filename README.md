@@ -49,10 +49,8 @@ const initialState = { firstName: 'Jon', lastName: 'Snow', email: 'jon.snow@emai
 
 ```
 
-reducer.js
-
 ```jsx
-
+// reducer.js
 export default function reducer(state, action){
     const { type, payload } = action;
 
@@ -72,9 +70,11 @@ export const setUsernameAction = ({ firstName, lastName }) => ({ type: SET_USERN
 
 ```
 
-UserProfile.jsx
+**Note: you need to wrap your component with `React.memo`**. 
+This is necessary to prevent unnecessary re-render caused by state updates.
 
 ```jsx
+// UserProfile.jsx
 import { connect } from './path/to/store';
 import { setUsernameAction } from './path/to/your/reducer';
 
@@ -101,7 +101,10 @@ const mapDispatchToProps = dispatch => ({
     setUsername: newName => dispatch(setUsernameAction(newName)),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(UserProfile);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps
+)(React.memo(UserProfile)); // use React.memo here
 
 ```
 
