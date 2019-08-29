@@ -51,8 +51,8 @@ interface Store {
   connect: Function;
 }
 
-export default function createStore(reducer: Reducer, initialContext: State): Store {
-  const Context = React.createContext(initialContext || {});
+export default function createStore(reducer: Reducer, initialContext: State = {}): Store {
+  const Context = React.createContext(initialContext);
   const { Provider: InitialProvider, Consumer } = Context;
 
   class Provider extends React.Component<ProviderProps, State> {
