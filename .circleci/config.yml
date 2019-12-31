@@ -2,77 +2,71 @@ version: 2.1
 
 commands:
   install:
-    description: 'Install packages'
+    description: "Install packages"
     steps:
       - checkout
       - run:
-          name: 'Update NPM'
-          command: 'sudo npm install -g npm@latest'
+          name: "Update NPM"
+          command: sudo npm install -g npm@latest
       - restore_cache:
           keys:
             - dependency-cache-{{ checksum "package.json" }}
       - run:
-          name: 'Install NPM'
+          name: "Install NPM"
           command: npm install
       - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
+
   run_tests:
-    description: 'Run tests'
+    description: "Run tests"
     steps:
       - run:
-          name: 'Run tests'
+          name: "Run tests"
           command: npm run test:ci
           environment:
-            JEST_JUNIT_OUTPUT: 'reports/junit/js-test-results.xml'
+            JEST_JUNIT_OUTPUT: "reports/junit/js-test-results.xml"
       - store_test_results:
           path: reports/junit
       - store_artifacts:
           path: reports/junit
+
   build:
-    description: 'Build the bundle'
-    parameters:
-      environment:
-        type: string
-        default: 'dev'
+    description: "Build the bundle"
     steps:
-      - run:
-          name: 'Build'
-          command: npm run build:<< parameters.environment >>
-  bump_beta_version:
-    description: 'Bump version to beta'
+      - run: npm run build
+      - save_cache:
+          key: repo-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ./dist
+            - ./package.json
+            - ./README.md
+
+  authenticate:
+    description: "Authenticate with registry"
     steps:
+      - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+
+  publish_beta:
+    description: "Publish beta version to npmjs"
+    steps:
+      - restore_cache:
+          keys:
+            - repo-{{ .Branch }}-{{ .Revision }}
       - run:
-          name: 'Bump rc version'
-          command: npm run add-version-suffix
+          name: "Publish package"
+          command: npm run publish:beta
 
   publish:
-    description: 'Publish to npmjs'
-    parameters:
-      environment:
-        type: string
-        default: 'dev'
+    description: "Publish to npmjs"
     steps:
+      - restore_cache:
+          keys:
+            - repo-{{ .Branch }}-{{ .Revision }}
       - run:
-          name: 'Authenticate with registry'
-          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-      - run:
-          name: 'Publish package'
-          command: npm run publish:<< parameters.environment >>
-
-  build_story:
-    description: 'Build the story'
-    steps:
-      - run:
-          name: 'build storybook'
-          command: npm run build-storybook
-  deploy_story:
-    description: 'Deploy the story'
-    steps:
-      - run:
-          name: 'deploy storybook'
-          command: npm run deploy-storybook
+          name: "Publish package"
+          command: npm publish
 
 jobs:
   build:
@@ -82,55 +76,50 @@ jobs:
     steps:
       - install
       - run_tests
-      # - build_story
-      - build:
-          environment: 'dev'
-      - build:
-          environment: 'prod'
-  release_rc:
+      - build
+
+  release_beta:
     docker:
       - image: circleci/node:10.15
     working_directory: ~/react-simple-redux
     steps:
-      - install
-      - run_tests
-      # - build_story
-      - bump_beta_version
-      - build:
-          environment: 'dev'
-      - publish:
-          environment: 'dev'
+      - authenticate
+      - publish_beta
 
   release:
     docker:
       - image: circleci/node:10.15
     working_directory: ~/react-simple-redux
     steps:
-      - install
-      - run_tests
-      # - build_story
-      - build:
-          environment: 'prod'
-      - publish:
-          environment: 'prod'
+      - authenticate
+      - publish
 
 workflows:
-  version: 2
+  version: 2.
   build:
+    jobs:
+      - build
+  release:
     jobs:
       - build:
           filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$/
             branches:
-              ignore:
-                - gh-pages
-                - master
-  release:
-    jobs:
-      - release_rc:
+              ignore: /.*/
+      - release_beta:
+          requires:
+            - build
           filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*$/
             branches:
-              only: development
+              ignore: /.*/
       - release:
+          requires:
+            - build
           filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
             branches:
-              only: master
+              ignore: /.*/
