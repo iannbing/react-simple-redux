@@ -1,6 +1,6 @@
 {
   "name": "react-simple-redux",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A minimal implementation of react-redux using React Context API",
   "keywords": [
     "react",
@@ -17,15 +17,9 @@
   "scripts": {
     "test": "jest",
     "test:ci": "jest --ci --runInBand --reporters=jest-junit",
-    "build:dev": "webpack --config webpack.dev.js",
-    "build:prod": "webpack --config webpack.prod.js",
-    "storybook": "start-storybook -p 9001 -c .storybook",
-    "build-storybook": "build-storybook && node .storybook/deploy-helper.js",
-    "deploy-storybook": "storybook-to-ghpages -e storybook-static",
-    "publish:dev": "npm publish --tag beta",
-    "publish:prod": "npm publish",
-    "add-version-suffix": "node ./node_modules/npm-version-suffix/run-add-suffix.js",
-    "remove-version-suffix": "node ./node_modules/npm-version-suffix/run-remove-suffix.js"
+    "build": "webpack --config webpack.prod.js",
+    "publish:beta": "npm publish --tag beta",
+    "publish": "npm publish"
   },
   "repository": {
     "type": "git",
