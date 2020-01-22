@@ -2,82 +2,102 @@ import React, { ComponentType } from 'react';
 
 /*---------------------------------- Types start ----------------------------------*/
 
-type State = { [key: string]: any };
-
-type Payload = any;
+type Payload = unknown;
 type Action = {
   type: string;
   payload?: Payload;
 };
 
-type Reducer = (state: State, action: Action) => State;
+type Reducer<T> = (state: T, action: Action) => T;
 
-interface OwnProps {
-  [key: string]: any;
-}
-
-interface ProviderProps extends OwnProps {
-  reducer: Reducer;
-  initialState: State;
+interface ProviderProps<T> {
+  reducer: Reducer<T>;
+  initialState: T;
 }
 
 type Dispatch = (action: Action) => Payload;
-type StateWithDispatch = {
-  [key: string]: any;
+type StateWithDispatch<T> = T & {
   dispatch: Dispatch;
 };
 
-type Dispatcher = (props: State) => any | void;
-type DispatchProps = {
-  [dispatchName: string]: Dispatcher;
+type Dispatcher<T> = (props: T) => any | void;
+type DispatchProps<T> = {
+  [dispatchName: string]: Dispatcher<T>;
 };
 
-type MapStateToProps = (state: State) => State;
-type MapDispatchToProps = (
+type MapStateToProps<StoreState, StateProps> = (state: StoreState) => StateProps;
+type MapDispatchToProps<StoreState, OwnProps extends object> = (
   dispatch: Dispatch,
   ownProps?: OwnProps
-) => DispatchProps | null;
-type MergeProps = (
-  stateProps: State,
-  dispatchProps: DispatchProps | null,
-  ownProps: OwnProps
-) => Object;
+) => DispatchProps<StoreState> | null;
+type MergeProps<MappedStateProps, MappedDispatchProps, OwnProps> = (
+  stateProps: MappedStateProps,
+  dispatchProps: MappedDispatchProps,
+  ownProps?: OwnProps
+) => MappedStateProps & MappedDispatchProps & OwnProps;
 
 /*---------------------------------- Types end ----------------------------------*/
 
-interface Store {
-  Provider: ComponentType<any>;
-  Consumer: React.ExoticComponent<React.ConsumerProps<State>>;
+export type Provider<T> = React.Component<ProviderProps<T>, T>;
+
+interface Store<StoreState> {
+  Provider: React.ComponentType<ProviderProps<StoreState>>;
+  Consumer: React.Consumer<StateWithDispatch<StoreState>>;
   connect: Function;
+  // connect: <
+  //   StateProps,
+  //   DispatchOwnProps extends object,
+  //   MappedStateProps,
+  //   MappedDispatchProps,
+  //   OwnProps
+  // >(
+  //   mapStateToProps: MapStateToProps<StoreState, StateProps>,
+  //   mapDispatchToProps: MapDispatchToProps<StoreState, DispatchOwnProps>,
+  //   mergeProps: MergeProps<MappedStateProps, MappedDispatchProps, OwnProps>
+  // ) => (
+  //   Wrapped: React.ComponentType<React.Component<any, any>>
+  // ) => (ownProps: object) => JSX.Element;
 }
 
-export default function createStore(reducer: Reducer, initialContext: State = {}): Store {
-  const Context = React.createContext(initialContext);
-  const { Provider: InitialProvider, Consumer } = Context;
+export default function createStore<StoreState extends object>(
+  reducer: Reducer<StoreState>,
+  initialContext?: StoreState
+): Store<StoreState> {
+  const Context = React.createContext<StoreState & { dispatch: Dispatch }>(
+    (initialContext || {}) as StateWithDispatch<StoreState>
+  );
+  const { Consumer } = Context;
 
-  class Provider extends React.Component<ProviderProps, State> {
-    constructor(props: ProviderProps) {
+  class Provider extends React.Component<ProviderProps<StoreState>, StoreState> {
+    constructor(props: ProviderProps<StoreState>) {
       super(props);
 
       const { initialState } = props;
       this.state = initialState;
     }
 
-    dispatch: Dispatch = async action => {
-      const { type, payload } = await action;
-      this.setState(state => reducer(state, { type, payload }));
+    dispatch: Dispatch = action => {
+      const { type, payload } = action;
+      this.setState((state: StoreState) => reducer(state, { type, payload }));
       return payload;
     };
 
     render() {
       const { children } = this.props;
-      const context: StateWithDispatch = { ...this.state, dispatch: this.dispatch };
-      return <InitialProvider value={context}>{children}</InitialProvider>;
+      const context: StoreState & { dispatch: Dispatch } = {
+        ...this.state,
+        dispatch: this.dispatch,
+      };
+      return <Context.Provider value={context}>{children}</Context.Provider>;
     }
   }
 
-  const defaultmapStateToProps: MapStateToProps = state => state;
-  const defaultMergeProps: MergeProps = (stateProps, dispatchProps, ownProps) => ({
+  const defaultmapStateToProps: MapStateToProps<StoreState, StoreState> = state => state;
+  const defaultMergeProps: MergeProps<StoreState, DispatchProps<StoreState>, object> = (
+    stateProps,
+    dispatchProps,
+    ownProps
+  ) => ({
     ...stateProps,
     ...dispatchProps,
     ...ownProps,
@@ -85,10 +105,10 @@ export default function createStore(reducer: Reducer, initialContext: State = {}
   const defaultMapDispatchToProps = () => null;
 
   const connect = (
-    mapStateToProps: MapStateToProps,
-    mapDispatchToProps: MapDispatchToProps,
-    mergeProps: MergeProps
-  ) => (Wrapped: ComponentType<any>) => (ownProps: OwnProps) => {
+    mapStateToProps: MapStateToProps<StoreState, any>,
+    mapDispatchToProps: MapDispatchToProps<StoreState, any>,
+    mergeProps: MergeProps<any, any, unknown>
+  ) => (Wrapped: ComponentType<React.Component<any>>) => (ownProps: object) => {
     const mapStateToPropsFun = mapStateToProps || defaultmapStateToProps;
     const mapDispatchToPropsFun = mapDispatchToProps || defaultMapDispatchToProps;
     const mergePropsFun = mergeProps || defaultMergeProps;
@@ -96,7 +116,7 @@ export default function createStore(reducer: Reducer, initialContext: State = {}
     return (
       <Consumer>
         {({ dispatch, ...state }) => {
-          const stateProps = mapStateToPropsFun(state);
+          const stateProps = mapStateToPropsFun(state as StoreState);
           const dispatchProps = mapDispatchToPropsFun(dispatch, ownProps);
           const merged = mergePropsFun(stateProps, dispatchProps, ownProps);
 
@@ -113,5 +133,6 @@ export default function createStore(reducer: Reducer, initialContext: State = {}
       </Consumer>
     );
   };
+
   return { Provider, Consumer, connect };
 }
